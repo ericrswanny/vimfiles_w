@@ -11,7 +11,7 @@ call pathogen#runtime_append_all_bundles()
 
 " Set the colorscheme and font settings
 " colorscheme solarized
-colorscheme solarized
+colorscheme molokai
 syntax on
 set guifont=Consolas
 
@@ -28,7 +28,7 @@ set backspace=indent,eol,start
 let mapleader=","
 
 " Set working directory
-cd ~/workspaces/k_dev_main
+cd ~/workspaces/l_dev_workspace
 set autochdir
 let NERDTreeChDirMode=2
 let Tlist_Use_Right_Window=1
@@ -91,6 +91,9 @@ map <C-j> <C-w>j
 map <C-k> <C-w>k
 map <C-l> <C-w>l
 
+" Map space to center screen on line
+nmap <space> zz
+
 " =- Set shortcuts -=
 " suggested mappings
 nnoremap <silent> <leader>i :JavaImport<cr>
@@ -106,10 +109,14 @@ nnoremap <silent> <leader>f 	:LocateFile <CR>
 nnoremap <silent> <leader>b		:Buffers <CR>
 nnoremap <silent> <leader>m  	:Sign <CR>
 nnoremap <silent> <leader>M  	:Signs <CR>
+nnoremap <silent> <leader>e		:lopen <CR>
 
 " Scratch pad
 nnoremap <silent> <leader>p		:Sscratch<CR>
 
+" Date insert
+:nnoremap <F5> "=strftime("%c")<CR>P
+:inoremap <F5> <C-R>=strftime("%c")<CR>
 
 " Auto open NERDTree
 " autocmd vimenter * if !argc() | NERDTree | endif
@@ -119,3 +126,33 @@ nnoremap <silent> <leader>p		:Sscratch<CR>
 
 " Auto load vimrc if it is changed
 autocmd! bufwritepost _vimrc source %
+
+" xml formatting with :PrettyXML
+function! DoPrettyXML()
+  " save the filetype so we can restore it later
+  let l:origft = &ft
+  set ft=
+  " delete the xml header if it exists. This will
+  " permit us to surround the document with fake tags
+  " without creating invalid xml.
+  1s/<?xml .*?>//e
+  " insert fake tags around the entire document.
+  " This will permit us to pretty-format excerpts of
+  " XML that may contain multiple top-level elements.
+  0put ='<PrettyXML>'
+  $put ='</PrettyXML>'
+  silent %!xmllint.exe --format -
+  " xmllint will insert an <?xml?> header. it's easy enough to delete
+  " if you don't want it.
+  " delete the fake tags
+  2d
+  $d
+  " restore the 'normal' indentation, which is one extra level
+  " too deep due to the extra tags we wrapped around the document.
+  silent %<
+  " back to home
+  1
+  " restore the filetype
+  exe "set ft=" . l:origft
+endfunction
+command! PrettyXML call DoPrettyXML()
